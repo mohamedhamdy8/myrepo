@@ -1,38 +1,31 @@
 -- ====== HWID CHECK ======
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 
--- Executor HWID (most executors support gethwid)
-local hwid = typeof(gethwid) == "function" and gethwid() or tostring(LocalPlayer.UserId)
+-- Require executor to support gethwid()
+if not gethwid then
+    error("❌ HWID function not supported by this executor.")
+end
 
--- Raw GitHub link to whitelist.json
-local whitelistUrl = "https://raw.githubusercontent.com/mohamedhamdy8/myrepo/main/whitelist.json"
+local hwid = gethwid()
 
--- Fetch JSON
+-- GitHub raw whitelist link
+local whitelistUrl = "https://raw.githubusercontent.com/mohamedhamdy8/myrepo/refs/heads/main/whitelist.json"
+
+-- Fetch whitelist
 local success, response = pcall(function()
     return game:HttpGet(whitelistUrl)
 end)
 
 if not success then
-    LocalPlayer:Kick("❌ Failed to fetch whitelist.")
-    return
+    error("❌ Could not fetch whitelist.")
 end
 
--- Parse JSON
-local data
-success, data = pcall(function()
-    return HttpService:JSONDecode(response)
-end)
+-- Decode JSON
+local data = HttpService:JSONDecode(response)
 
-if not success then
-    LocalPlayer:Kick("❌ Whitelist JSON invalid.")
-    return
-end
-
--- Check if hwid is authorized
+-- Check authorization
 local authorized = false
-for _, id in ipairs(data.HWIDs or {}) do
+for _, id in ipairs(data.HWIDs) do
     if id == hwid then
         authorized = true
         break
@@ -40,11 +33,10 @@ for _, id in ipairs(data.HWIDs or {}) do
 end
 
 if not authorized then
-    LocalPlayer:Kick("❌ HWID not authorized: " .. hwid)
-    return
+    error("❌ HWID not authorized: " .. tostring(hwid))
 end
 
-print("✅ Authorized HWID: " .. hwid)
+print("✅ Authorized HWID: " .. tostring(hwid))
 -- ====== END HWID CHECK ======
 
 -- load mobile-friendly Venyx
